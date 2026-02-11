@@ -17,7 +17,7 @@ flowchart TD
 
     %% Qdrant 검색 결과 분기
     QdrantSearch -- "확실 (Score >= 0.8)" --> FoundData[데이터 확보] --> PushSlots
-    QdrantSearch -- "모호 (0.6 ~ 0.8)" --> ShowOptions[유사 업체/품목<br/>옵션 버튼 제공]
+    QdrantSearch -- "모호 (0.6 ~ 0.8)" --> ShowOptions["유사 업체/품목<br/>옵션 버튼 제공"]
     QdrantSearch -- "없음 (Score < 0.6)" --> EmptyData[빈 슬롯 상태] --> PushSlots
 
     %% 사용자 선택 (옵션에서 선택 시)
@@ -32,7 +32,7 @@ flowchart TD
     subgraph EDIT_PROCESS [CORE: 데이터 완성 및 발행]
         PushSlots --> CheckMissing{필수값 누락 확인}
         
-        CheckMissing -- "누락 있음" --> AskUser[부족한 정보 질문<br/>(거래처/품목/금액/날짜)]
+        CheckMissing -- "누락 있음" --> AskUser["부족한 정보 질문<br/>(거래처/품목/금액/날짜)"]
         AskUser --> User
         
         CheckMissing -- "완벽함" --> FinalConfirm{최종 발행 확인}
