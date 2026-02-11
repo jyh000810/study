@@ -3,49 +3,46 @@
 flowchart TD
     User([사용자 입력]) --> Router{LLM Router}
 
-    %% 1. INVOICE - 분기
-    Router -- "INVOICE" --> InvoiceType{Mode 확인}
+    %% ------------------------------------------------
+    %% 1. 기타 기능 (단발성)
+    %% ------------------------------------------------
+    Router -- "GUIDE (가이드)" --> GuideRes[가이드 답변 제공]
+    Router -- "OTHER (기타)" --> OtherRes[일상 응대]
 
     %% ------------------------------------------------
-    %% A. NEW Process (데이터 수집 단계)
+    %% 2. 데이터 수집 단계 (NEW / AGAIN)
     %% ------------------------------------------------
-    InvoiceType -- "NEW (신규)" --> PartnerCheck["1. 거래처 식별<br/>(Qdrant Vector Search)"]
+    Router -- "AGAIN (재발행)" --> LoadHistory[이전 이력 조회] --> PushSlots
+    Router -- "NEW (신규)" --> QdrantSearch{1. Qdrant 검색}
 
-    PartnerCheck -- "Score >= 0.8" --> PartnerFound[데이터 자동 선택]
-    PartnerCheck -- "0.6 <= Score < 0.8" --> PartnerSelect[유사 업체 옵션 제공]
-    PartnerCheck -- "Score < 0.6" --> PartnerInput[거래처 입력 요청]
+    %% Qdrant 검색 결과 분기
+    QdrantSearch -- "확실 (Score >= 0.8)" --> FoundData[데이터 확보] --> PushSlots
+    QdrantSearch -- "모호 (0.6 ~ 0.8)" --> ShowOptions[유사 업체/품목<br/>옵션 버튼 제공]
+    QdrantSearch -- "없음 (Score < 0.6)" --> EmptyData[빈 슬롯 상태] --> PushSlots
 
-    %% 거래처 확보 후 품목/금액 체크
-    PartnerFound & PartnerSelect & PartnerInput --> ItemCheck{2. 품목/금액 확인}
-
-    ItemCheck -- "품목 누락" --> MatchAmount["금액 일치 데이터<br/>(Max 5건 옵션)"]
-    ItemCheck -- "금액 누락" --> MatchItem["품목 유사도 >= 0.7<br/>(유사 데이터 옵션)"]
-    ItemCheck -- "둘 다 누락" --> MatchRecent["최근 거래 기반<br/>(옵션 제공)"]
-    ItemCheck -- "데이터 있음" --> DataReady(데이터 병합)
+    %% 사용자 선택 (옵션에서 선택 시)
+    ShowOptions -.-> UserSelect([사용자 선택]) --> Router
+    UserSelect -- "EDIT (선택값 입력)" --> PushSlots(데이터 Context 병합)
 
     %% ------------------------------------------------
-    %% B. EDIT Process (슬롯 필링 및 발행) - 모든 길은 여기로 통함
+    %% 3. 핵심: EDIT 프로세스 (무조건 여기를 통과함)
     %% ------------------------------------------------
-    MatchAmount & MatchItem & MatchRecent & DataReady --> MergeData
+    Router -- "EDIT (수정/입력)" --> PushSlots
     
-    InvoiceType -- "EDIT (수정)" --> MergeData
-    
-    subgraph EDIT_PHASE [EDIT: 정보 보완 및 확정]
-        MergeData(데이터 병합 & Slot Update) --> CheckSlots{누락 정보 확인}
-        CheckSlots -- "정보 부족" --> AskUser[부족한 정보 재질문]
+    subgraph EDIT_PROCESS [CORE: 데이터 완성 및 발행]
+        PushSlots --> CheckMissing{필수값 누락 확인}
+        
+        CheckMissing -- "누락 있음" --> AskUser[부족한 정보 질문<br/>(거래처/품목/금액/날짜)]
         AskUser --> User
-        CheckSlots -- "정보 완비" --> FinalConfirm[최종 발행 확인]
+        
+        CheckMissing -- "완벽함" --> FinalConfirm{최종 발행 확인}
+        FinalConfirm -- "User: 예" --> IssueDone((발행 완료))
+        FinalConfirm -- "User: 아니오" --> AskUser
     end
 
-    %% ------------------------------------------------
-    %% C. OTHERS
-    %% ------------------------------------------------
-    Router -- "AGAIN (재발행)" --> FetchHistory[이전 이력 조회] --> MergeData
-    Router -- "GUIDE (가이드)" --> ShowGuide["가이드 답변<br/>+ 발행 유도"]
-    Router -- "OTHER (그 외)" --> ChitChat["일상 응대<br/>+ 발행 유도"]
-
-    %% Style
-    style EDIT_PHASE fill:#e3f2fd,stroke:#2196f3,stroke-width:2px,stroke-dasharray: 5 5
-    style MergeData fill:#2196f3,color:#fff,stroke:#333
-    style FinalConfirm fill:#00e676,stroke:#333,stroke-width:2px
+    %% 스타일 정의
+    style EDIT_PROCESS fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,rx:10,ry:10
+    style PushSlots fill:#2196f3,color:#fff,stroke:#333
+    style IssueDone fill:#00c853,color:#fff,stroke:#333
+    style QdrantSearch fill:#ffecb3,stroke:#333
 ```
