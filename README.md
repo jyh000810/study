@@ -29,16 +29,16 @@ flowchart TD
     %% ------------------------------------------------
     Router -- "EDIT (수정/입력)" --> PushSlots
     
-    subgraph EDIT_PROCESS [CORE: 데이터 완성 및 발행]
-        PushSlots --> CheckMissing{필수값 누락 확인}
+
+    PushSlots --> CheckMissing{필수값 누락 확인}
         
-        CheckMissing -- "누락 있음" --> AskUser["부족한 정보 질문<br/>(거래처/품목/금액/날짜)"]
-        AskUser --> User
+    CheckMissing -- "누락 있음" --> AskUser["부족한 정보 질문<br/>(거래처/품목/금액/날짜)"]
+    AskUser --> User
         
-        CheckMissing -- "완벽함" --> FinalConfirm{최종 발행 확인}
-        FinalConfirm -- "User: 예" --> IssueDone((발행 완료))
-        FinalConfirm -- "User: 아니오" --> AskUser
-    end
+    CheckMissing -- "완벽함" --> FinalConfirm{최종 발행 확인}
+    FinalConfirm -- "User: 예" --> IssueDone((발행 완료))
+    FinalConfirm -- "User: 아니오" --> AskUser
+
 
 
 ```
