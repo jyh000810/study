@@ -40,9 +40,5 @@ flowchart TD
         FinalConfirm -- "User: 아니오" --> AskUser
     end
 
-    %% 스타일 정의
-    style EDIT_PROCESS fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,rx:10,ry:10
-    style PushSlots fill:#2196f3,color:#fff,stroke:#333
-    style IssueDone fill:#00c853,color:#fff,stroke:#333
-    style QdrantSearch fill:#ffecb3,stroke:#333
+
 ```
